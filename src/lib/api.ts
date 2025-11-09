@@ -1,4 +1,12 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import type {
+  ProductCreatePayload,
+  ProductUpdatePayload,
+  OrderAdminCreatePayload,
+  OrderAdminUpdatePayload,
+  AdminUserCreatePayload,
+  AdminUserUpdatePayload,
+} from '@/types';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/';
 
@@ -86,7 +94,7 @@ export const api = {
   auth: {
     login: (credentials: { username: string; password: string }) =>
       apiClient.post('api/users/login/', credentials),
-    // Admin auth hits the root-scoped endpoint (no /api prefix). Adds X-CSRFToken header if present.
+    // Admin auth hits dedicated API endpoint. Adds X-CSRFToken header if present.
     adminLogin: (credentials: { username: string; password: string }) => {
       let csrf: string | undefined;
       if (typeof document !== 'undefined') {
@@ -95,7 +103,7 @@ export const api = {
           .find((row) => row.startsWith('csrftoken='))
           ?.split('=')[1];
       }
-      return apiClient.post('/admin/login/', credentials, {
+      return apiClient.post('api/admin/login/', credentials, {
         headers: csrf ? { 'X-CSRFToken': csrf } : undefined,
         withCredentials: true,
       });
@@ -110,6 +118,17 @@ export const api = {
     }) => apiClient.post('api/users/register/', data),
 
     logout: () => apiClient.post('api/users/logout/'),
+
+    getUsers: () => apiClient.get('api/users/'),
+
+    getUser: (id: number) => apiClient.get(`api/users/${id}/`),
+
+    createUser: (data: AdminUserCreatePayload) => apiClient.post('api/users/', data),
+
+    updateUser: (id: number, data: AdminUserUpdatePayload) =>
+      apiClient.patch(`api/users/${id}/`, data),
+
+    deleteUser: (id: number) => apiClient.delete(`api/users/${id}/`),
 
     getProfile: () => apiClient.get('api/users/profile/'),
 
@@ -145,15 +164,11 @@ export const api = {
 
     get: (id: number) => apiClient.get(`api/products/products/${id}/`),
 
-    create: (data: FormData) =>
-      apiClient.post('/products/products/', data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }),
-    
-    update: (id: number, data: FormData) =>
-      apiClient.patch(`api/products/products/${id}/`, data, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }),
+    create: (data: ProductCreatePayload) =>
+      apiClient.post('api/products/products/', data),
+
+    update: (id: number, data: ProductUpdatePayload) =>
+      apiClient.patch(`api/products/products/${id}/`, data),
 
     delete: (id: number) => apiClient.delete(`api/products/products/${id}/`),
   },
@@ -193,6 +208,14 @@ export const api = {
     list: () => apiClient.get('api/orders/orders/'),
     
     get: (id: number) => apiClient.get(`api/orders/orders/${id}/`),
+    
+    adminCreate: (data: OrderAdminCreatePayload) =>
+      apiClient.post('api/orders/orders/', data),
+
+    adminUpdate: (id: number, data: OrderAdminUpdatePayload) =>
+      apiClient.patch(`api/orders/orders/${id}/`, data),
+
+    adminDelete: (id: number) => apiClient.delete(`api/orders/orders/${id}/`),
     
     // Legacy support for creating an order from the current cart
     createFromCart: (data: {

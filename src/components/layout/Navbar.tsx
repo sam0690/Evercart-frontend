@@ -177,9 +177,9 @@ export function Navbar() {
                 {isAdmin && (
                   <Link href="/admin">
                     <Button 
-                      variant="coral" 
+                      variant="ghost" 
                       size="sm"
-                      className="rounded-xl shadow-coral-sm hover:shadow-coral-md transition-all"
+                      className="rounded-xl shadow-coral-sm hover:shadow-coral-md transition-all text-black"
                     >
                       Admin
                     </Button>

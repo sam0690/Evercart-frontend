@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { useOrders } from '@/hooks/useApi';
+import Link from 'next/link';
+import { useAdminOrders, useAdminUpdateOrder, useAdminDeleteOrder } from '@/hooks/useAdminApi';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,21 +23,41 @@ import {
 } from 'lucide-react';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { motion } from 'framer-motion';
-import type { Order, OrderItem } from '@/types';
+import type { Order } from '@/types';
+import {
+  filterOrders,
+  calculateOrderStats,
+  getStatusColor,
+  syncOverridesWithOrders,
+  updateOrderStatusAction,
+  toggleOrderPaidAction,
+  deleteOrderAction,
+  formatOrderItemsSummary,
+  StatusOverrideMap,
+  PaidOverrideMap,
+} from '@/services/adminOrdersService';
+import { enforceAdminAccess } from '@/services/adminAccessService';
 
 export default function AdminOrdersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [statusOverrides, setStatusOverrides] = useState<StatusOverrideMap>({});
+  const [paidOverrides, setPaidOverrides] = useState<PaidOverrideMap>({});
 
   useEffect(() => {
-    if (!authLoading && (!user || !user.is_admin)) {
-      router.push('/admin/login');
-    }
+    enforceAdminAccess({ user, authLoading, router });
   }, [user, authLoading, router]);
 
-  const { data: orders = [], isLoading } = useOrders();
+  const { data: orders = [], isLoading } = useAdminOrders();
+  const updateOrderMutation = useAdminUpdateOrder();
+  const deleteOrderMutation = useAdminDeleteOrder();
+
+  useEffect(() => {
+    setStatusOverrides((prev) => syncOverridesWithOrders(orders, prev, 'status'));
+    setPaidOverrides((prev) => syncOverridesWithOrders(orders, prev, 'is_paid'));
+  }, [orders]);
 
   if (authLoading || isLoading) {
     return <PageLoader />;
@@ -46,35 +67,8 @@ export default function AdminOrdersPage() {
     return null;
   }
 
-  const filteredOrders = orders.filter((order: Order) => {
-    const matchesSearch = searchQuery === '' || 
-      order.id.toString().includes(searchQuery) ||
-      order.user_details?.username.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'paid':
-        return 'bg-blue-100 text-blue-800';
-      case 'shipped':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const orderStats = {
-    total: orders.length,
-    pending: orders.filter((o: Order) => o.status === 'pending').length,
-    paid: orders.filter((o: Order) => o.status === 'paid').length,
-    shipped: orders.filter((o: Order) => o.status === 'shipped').length,
-  };
+  const filteredOrders = filterOrders(orders, searchQuery, statusFilter);
+  const orderStats = calculateOrderStats(orders);
 
   return (
     <main className="flex-1 bg-ambient-soft">
@@ -86,6 +80,8 @@ export default function AdminOrdersPage() {
             description="View and manage customer orders"
           />
         </div>
+
+        
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -115,6 +111,8 @@ export default function AdminOrdersPage() {
           </Card>
         </div>
 
+       
+
         {/* Search Bar */}
         <Card className="mb-6 glass-card border border-white/20">
           <CardContent className="pt-6">
@@ -137,6 +135,12 @@ export default function AdminOrdersPage() {
             </div>
           </CardContent>
         </Card>
+
+         <div className="mb-6 flex justify-end">
+          <Link href="/admin/orders/new">
+            <Button className="text-black">Create Order</Button>
+          </Link>
+        </div>
 
         {/* Orders List */}
         {filteredOrders.length === 0 ? (
@@ -171,6 +175,12 @@ export default function AdminOrdersPage() {
                             className={getStatusColor(order.status)}
                           >
                             {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                          </Badge>
+                          <Badge
+                            variant={order.is_paid ? 'secondary' : 'outline'}
+                            className={order.is_paid ? 'bg-green-100 text-green-800' : ''}
+                          >
+                            {order.is_paid ? 'Paid' : 'Unpaid'}
                           </Badge>
                         </div>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -227,17 +237,71 @@ export default function AdminOrdersPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          Items: {order.items?.map((item: OrderItem) => item.product_details?.title || item.product_details?.name).join(', ') || 'No items'}
-                        </span>
+                    <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Package className="h-4 w-4" />
+                        <span>Items: {formatOrderItemsSummary(order.items)}</span>
                       </div>
-                      <Button variant="outline" size="sm">
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Details
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span>Status:</span>
+                          <select
+                            value={statusOverrides[order.id] ?? order.status}
+                            onChange={(e) =>
+                              updateOrderStatusAction({
+                                orderId: order.id,
+                                status: e.target.value as Order['status'],
+                                orders,
+                                statusOverrides,
+                                setStatusOverrides,
+                                mutation: updateOrderMutation,
+                              })
+                            }
+                            className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+                            disabled={updateOrderMutation.isPending}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                            <option value="shipped">Shipped</option>
+                          </select>
+                        </label>
+                        <label className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            checked={paidOverrides[order.id] ?? order.is_paid}
+                            onChange={() =>
+                              toggleOrderPaidAction({
+                                order,
+                                paidOverrides,
+                                setPaidOverrides,
+                                mutation: updateOrderMutation,
+                              })
+                            }
+                            disabled={updateOrderMutation.isPending}
+                          />
+                          Paid
+                        </label>
+                        <Button variant="outline" size="sm">
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Details
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() =>
+                            deleteOrderAction({
+                              orderId: order.id,
+                              setStatusOverrides,
+                              setPaidOverrides,
+                              mutation: deleteOrderMutation,
+                            })
+                          }
+                          disabled={deleteOrderMutation.isPending}
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>

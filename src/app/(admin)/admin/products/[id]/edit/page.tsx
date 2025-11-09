@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ArrowLeft, Package } from "lucide-react";
+import type { ProductUpdatePayload } from "@/types";
 
 export default function EditProductPage() {
   const { user, loading: authLoading } = useAuth();
@@ -41,9 +42,17 @@ export default function EditProductPage() {
       setDescription(product.description || "");
       setPrice(String(product.price ?? "0"));
       setInventory(String(product.inventory ?? "0"));
-      if (typeof product.category === "number") setCategory(String(product.category));
+
+      if (typeof product.category === "number") {
+        setCategory(String(product.category));
+      } else if (typeof product.category === "string" && categories.length > 0) {
+        const match = categories.find((c: any) => c.name === product.category);
+        if (match) {
+          setCategory(String(match.id));
+        }
+      }
     }
-  }, [product]);
+  }, [product, categories]);
 
   if (authLoading || isLoading) {
     return (
@@ -55,14 +64,29 @@ export default function EditProductPage() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const form = new FormData();
-      form.append("title", title);
-      form.append("description", description);
-      form.append("price", price);
-      form.append("inventory", inventory);
-      if (category) form.append("category", category);
+      const payload: ProductUpdatePayload = {};
 
-      await updateProduct.mutateAsync({ id, formData: form });
+      if (title.trim()) payload.title = title.trim();
+      if (description.trim()) {
+        payload.description = description.trim();
+      } else if (description === "") {
+        payload.description = "";
+      }
+
+      if (price !== "") {
+        payload.price = price;
+      }
+
+      const parsedInventory = Number(inventory);
+      if (!Number.isNaN(parsedInventory)) {
+        payload.inventory = parsedInventory;
+      }
+
+      if (category) {
+        payload.category = Number(category);
+      }
+
+      await updateProduct.mutateAsync({ id, payload });
       toast.success("Product updated");
       router.push("/admin/products");
     } catch (err) {
@@ -118,7 +142,7 @@ export default function EditProductPage() {
                 </select>
               </div>
               <div className="pt-2 flex gap-3">
-                <Button type="submit" disabled={updateProduct.isPending}>
+                <Button type="submit" disabled={updateProduct.isPending} className="text-black">
                   {updateProduct.isPending ? "Saving..." : "Save Changes"}
                 </Button>
                 <Link href="/admin/products">

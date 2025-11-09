@@ -106,6 +106,7 @@ export function CartSidebar() {
                   </p>
                   <Link href="/" onClick={closeCart}>
                     <Button 
+                      variant="ghost"
                       size="lg" 
                       className="rounded-xl shadow-ocean-md hover:shadow-ocean-lg transition-all text-black cursor-pointer"
                     >

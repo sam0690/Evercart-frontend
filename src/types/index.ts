@@ -12,6 +12,20 @@ export interface User {
   date_joined: string;
 }
 
+export interface AdminUserCreatePayload {
+  username: string;
+  email: string;
+  password?: string;
+  first_name?: string;
+  last_name?: string;
+  is_customer?: boolean;
+  is_admin?: boolean;
+  is_staff?: boolean;
+  is_superuser?: boolean;
+}
+
+export type AdminUserUpdatePayload = Partial<AdminUserCreatePayload>;
+
 export interface LoginCredentials {
   username: string;
   password: string;
@@ -44,6 +58,24 @@ export interface ProductImage {
   image: string;
   alt_text?: string;
 }
+
+export interface ProductImageInput {
+  image: string;
+  alt_text?: string;
+  is_primary?: boolean;
+}
+
+export interface ProductCreatePayload {
+  title: string;
+  slug: string;
+  description?: string;
+  price: string | number;
+  inventory: number | string;
+  category?: number | null;
+  images?: ProductImageInput[];
+}
+
+export type ProductUpdatePayload = Partial<ProductCreatePayload>;
 
 export interface Product {
   id: number;
@@ -95,6 +127,7 @@ export interface OrderItem {
   id: number;
   product: number;
   product_details?: Product;
+  product_id?: number;
   quantity: number;
   price: string;
 }
@@ -122,6 +155,28 @@ export interface OrderCreate {
   shipping_postal_code: string;
   shipping_country: string;
 }
+
+export interface OrderItemInput {
+  product: number;
+  quantity: number;
+}
+
+export interface OrderAdminCreatePayload {
+  user: number;
+  status?: Order['status'];
+  is_paid?: boolean;
+  transaction_id?: string;
+  shipping_address?: string;
+  shipping_city?: string;
+  shipping_postal_code?: string;
+  shipping_country?: string;
+  items_data: OrderItemInput[];
+}
+
+export type OrderAdminUpdatePayload = Partial<OrderAdminCreatePayload> & {
+  user?: number;
+  items_data?: OrderItemInput[];
+};
 
 // Payment Types
 export type PaymentGateway = 'esewa' | 'khalti' | 'fonepay' | 'bank';

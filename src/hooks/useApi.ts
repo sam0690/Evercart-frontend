@@ -13,6 +13,8 @@ import type {
   CartItemCreate,
   OrderCreate,
   PaymentInitiateRequest,
+  ProductCreatePayload,
+  ProductUpdatePayload,
 } from '@/types';
 
 // ============================================
@@ -44,8 +46,8 @@ export function useCreateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (formData: FormData) => {
-      const { data } = await api.products.create(formData);
+    mutationFn: async (payload: ProductCreatePayload) => {
+      const { data } = await api.products.create(payload);
       return data;
     },
     onSuccess: () => {
@@ -62,8 +64,8 @@ export function useUpdateProduct() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, formData }: { id: number; formData: FormData }) => {
-      const { data } = await api.products.update(id, formData);
+    mutationFn: async ({ id, payload }: { id: number; payload: ProductUpdatePayload }) => {
+      const { data } = await api.products.update(id, payload);
       return data;
     },
     onSuccess: () => {
