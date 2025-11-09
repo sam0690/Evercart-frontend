@@ -1,26 +1,531 @@
 @import "tailwindcss";
 
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* ========== BASE COLORS - Light Theme ========== */
+  --color-background: 0 0% 99%;
+  --color-foreground: 216 30% 18%;
+  --color-card: 0 0% 100%;
+  --color-card-foreground: 216 30% 18%;
+  --color-popover: 0 0% 100%;
+  --color-popover-foreground: 216 30% 18%;
+  
+  /* Primary brand - Ocean Blue */
+  --color-primary: 211 100% 52%;
+  --color-primary-foreground: 0 0% 100%;
+  
+  /* Secondary - Soft neutrals */
+  --color-secondary: 210 25% 97%;
+  --color-secondary-foreground: 216 30% 18%;
+  
+  /* Muted - Subtle grays */
+  --color-muted: 210 25% 96%;
+  --color-muted-foreground: 215 18% 45%;
+  
+  /* Accent - Coral */
+  --color-accent: 14 100% 62%;
+  --color-accent-foreground: 0 0% 100%;
+  
+  /* Success - Teal */
+  --color-success: 173 80% 42%;
+  --color-success-foreground: 0 0% 100%;
+  
+  /* Destructive - Red */
+  --color-destructive: 0 84% 60%;
+  --color-destructive-foreground: 0 0% 100%;
+  
+  /* Borders and Inputs */
+  --color-border: 214 25% 90%;
+  --color-input: 214 25% 90%;
+  --color-ring: 211 100% 52%;
+  
+  /* ========== EXTENDED COLOR SCALES ========== */
+  
+  /* Ocean Blue Scale */
+  --color-ocean-50: 210 100% 98%;
+  --color-ocean-100: 210 100% 95%;
+  --color-ocean-200: 210 100% 88%;
+  --color-ocean-300: 210 100% 78%;
+  --color-ocean-400: 211 100% 65%;
+  --color-ocean-500: 211 100% 52%;
+  --color-ocean-600: 211 100% 45%;
+  --color-ocean-700: 211 100% 38%;
+  --color-ocean-800: 211 95% 30%;
+  --color-ocean-900: 211 85% 22%;
+  
+  /* Coral Scale */
+  --color-coral-50: 14 100% 98%;
+  --color-coral-100: 14 100% 95%;
+  --color-coral-200: 14 100% 87%;
+  --color-coral-300: 14 100% 77%;
+  --color-coral-400: 14 100% 68%;
+  --color-coral-500: 14 100% 62%;
+  --color-coral-600: 14 98% 55%;
+  --color-coral-700: 14 92% 48%;
+  --color-coral-800: 14 87% 40%;
+  --color-coral-900: 14 82% 32%;
+  
+  /* Pearl/Neutral Scale */
+  --color-pearl-50: 210 25% 99%;
+  --color-pearl-100: 210 25% 97%;
+  --color-pearl-200: 214 25% 93%;
+  --color-pearl-300: 214 20% 87%;
+  --color-pearl-400: 214 18% 72%;
+  --color-pearl-500: 214 16% 57%;
+  --color-pearl-600: 215 18% 45%;
+  --color-pearl-700: 216 20% 35%;
+  --color-pearl-800: 216 24% 25%;
+  --color-pearl-900: 216 28% 16%;
+  
+  /* Teal/Success Scale */
+  --color-teal-50: 173 80% 97%;
+  --color-teal-100: 173 80% 90%;
+  --color-teal-200: 173 80% 78%;
+  --color-teal-300: 173 80% 66%;
+  --color-teal-400: 173 80% 54%;
+  --color-teal-500: 173 80% 42%;
+  --color-teal-600: 173 80% 35%;
+  --color-teal-700: 173 80% 28%;
+  --color-teal-800: 173 72% 22%;
+  --color-teal-900: 173 65% 16%;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+/* ========== GLOBAL STYLES ========== */
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  border-color: hsl(var(--color-border));
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Subtle ambient background to enhance glass layers (light-only) */
+  background-color: hsl(var(--color-background));
+  background-image:
+    radial-gradient(1200px 600px at 100% -10%, hsl(var(--color-ocean-100) / 0.28), transparent 60%),
+    radial-gradient(900px 500px at -10% 100%, hsl(var(--color-coral-100) / 0.22), transparent 60%),
+    linear-gradient(180deg, hsl(var(--color-pearl-50)), hsl(var(--color-pearl-100)));
+  background-repeat: no-repeat;
+  background-attachment: fixed, fixed, fixed;
+  background-size: cover, cover, cover;
+  color: hsl(var(--color-foreground));
+  font-feature-settings: 'rlig' 1, 'calt' 1, 'ss01' 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
+
+/* ========== TEXT GRADIENTS ========== */
+
+.gradient-ocean {
+  background: linear-gradient(135deg, hsl(211 100% 52%) 0%, hsl(211 100% 38%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-coral {
+  background: linear-gradient(135deg, hsl(14 100% 62%) 0%, hsl(14 92% 48%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-teal {
+  background: linear-gradient(135deg, hsl(173 80% 42%) 0%, hsl(173 80% 28%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-ocean-coral {
+  background: linear-gradient(135deg, hsl(211 100% 52%) 0%, hsl(14 100% 62%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-ocean-multi {
+  background: linear-gradient(135deg, hsl(211 100% 52%) 0%, hsl(211 100% 45%) 50%, hsl(14 100% 62%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ========== GLASSMORPHISM ========== */
+
+/* Main glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* Strong glass - More opaque */
+.glass-strong {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Light glass - More transparent */
+.glass-light {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Glass Card - subtle frosted card */
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Glass Panel - slightly more opaque panels */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.08);
+}
+
+/* Glass with colored tint */
+.glass-ocean {
+  background: rgba(0, 136, 255, 0.08);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(0, 136, 255, 0.2);
+}
+
+.glass-coral {
+  background: rgba(255, 107, 82, 0.08);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 107, 82, 0.2);
+}
+
+/* ========== SHADOWS & ELEVATION ========== */
+
+.shadow-soft {
+  box-shadow: 
+    0 1px 2px 0 rgb(0 0 0 / 0.02),
+    0 1px 3px 0 rgb(0 0 0 / 0.04);
+}
+
+.shadow-elevated {
+  box-shadow: 
+    0 2px 8px -2px rgb(0 0 0 / 0.04),
+    0 4px 16px -4px rgb(0 0 0 / 0.06);
+}
+
+.shadow-ocean-sm {
+  box-shadow: 0 2px 10px -2px hsl(211 100% 52% / 0.14);
+}
+
+.shadow-ocean-md {
+  box-shadow: 0 4px 20px -4px hsl(211 100% 52% / 0.20);
+}
+
+.shadow-ocean-lg {
+  box-shadow: 0 8px 36px -8px hsl(211 100% 52% / 0.26);
+}
+
+.shadow-ocean-xl {
+  box-shadow: 0 12px 52px -12px hsl(211 100% 52% / 0.32);
+}
+
+.shadow-coral-sm {
+  box-shadow: 0 2px 10px -2px hsl(14 100% 62% / 0.14);
+}
+
+.shadow-coral-md {
+  box-shadow: 0 4px 20px -4px hsl(14 100% 62% / 0.20);
+}
+
+.shadow-coral-lg {
+  box-shadow: 0 8px 36px -8px hsl(14 100% 62% / 0.26);
+}
+
+.shadow-glow-ocean {
+  box-shadow: 0 0 28px hsl(211 100% 52% / 0.5);
+}
+
+.shadow-glow-coral {
+  box-shadow: 0 0 28px hsl(14 100% 62% / 0.5);
+}
+
+/* ========== HOVER EFFECTS ========== */
+
+.hover-lift {
+  transition: 
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 48px -12px hsl(211 100% 52% / 0.28);
+}
+
+.hover-glow {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-glow:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 0 32px hsl(211 100% 52% / 0.4);
+}
+
+/* ========== ANIMATIONS ========== */
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.shimmer {
+  animation: shimmer 2.5s infinite linear;
+  background: linear-gradient(
+    to right,
+    hsl(var(--color-muted)) 0%,
+    hsl(var(--color-border)) 50%,
+    hsl(var(--color-muted)) 100%
+  );
+  background-size: 1000px 100%;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 hsl(211 100% 52% / 0.7);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 0 8px hsl(211 100% 52% / 0);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-right {
+  animation: slide-in-right 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-32px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-left {
+  animation: slide-in-left 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.scale-in {
+  animation: scale-in 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* ========== CUSTOM SCROLLBAR ========== */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: hsl(var(--color-pearl-100));
+  border-radius: 100px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, hsl(211 100% 52%), hsl(211 100% 45%));
+  border-radius: 100px;
+  border: 2px solid hsl(var(--color-pearl-100));
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, hsl(211 100% 48%), hsl(211 100% 40%));
+}
+
+/* ========== UTILITY CLASSES ========== */
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-smooth-fast {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.transition-smooth-slow {
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Ambient background utilities for sections/panels (light-only) */
+.bg-ambient {
+  background-image:
+    radial-gradient(900px 480px at 100% -10%, hsl(var(--color-ocean-100) / 0.24), transparent 60%),
+    radial-gradient(720px 420px at -10% 100%, hsl(var(--color-coral-100) / 0.20), transparent 60%),
+    linear-gradient(180deg, hsl(var(--color-pearl-50)), hsl(var(--color-pearl-100)));
+  background-repeat: no-repeat;
+  background-size: cover, cover, cover;
+}
+
+.bg-ambient-soft {
+  background-image:
+    radial-gradient(780px 420px at 110% -10%, hsl(var(--color-ocean-100) / 0.16), transparent 60%),
+    radial-gradient(680px 380px at -10% 110%, hsl(var(--color-coral-100) / 0.14), transparent 60%),
+    linear-gradient(180deg, hsl(var(--color-pearl-50)), hsl(var(--color-pearl-100)));
+  background-repeat: no-repeat;
+  background-size: cover, cover, cover;
+}
+
+.bg-ambient-grid {
+  background-image:
+    radial-gradient(900px 480px at 100% -10%, hsl(var(--color-ocean-100) / 0.18), transparent 60%),
+    radial-gradient(720px 420px at -10% 100%, hsl(var(--color-coral-100) / 0.16), transparent 60%),
+    linear-gradient(180deg, hsl(var(--color-pearl-50)), hsl(var(--color-pearl-100)));
+  background-repeat: no-repeat;
+  background-size: cover, cover, cover;
+}
+
+/* Background patterns for depth */
+.bg-pattern-dots {
+  background-image: radial-gradient(hsl(var(--color-border)) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.bg-pattern-grid {
+  background-image: 
+    linear-gradient(hsl(var(--color-border)) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--color-border)) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Focus visible states */
+.focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid hsl(var(--color-ring));
+  outline-offset: 2px;
+}
+
+/* Backdrop blur support */
+@supports ((-webkit-backdrop-filter: blur(20px)) or (backdrop-filter: blur(20px))) {
+  .supports-blur {
+    background-color: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* Improved text rendering */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* Better link states */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+a:focus-visible {
+  outline: 2px solid hsl(var(--color-ring));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Button reset improvements */
+button {
+  font-family: inherit;
+}
+
+/* Image improvements */
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/* Selection color */
+::selection {
+  background-color: hsl(211 100% 52% / 0.25);
+  color: hsl(var(--color-foreground));
+}
+
