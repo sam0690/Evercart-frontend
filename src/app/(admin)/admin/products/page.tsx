@@ -66,8 +66,8 @@ export default function AdminProductsPage() {
             description="Manage your product catalog"
           />
           <Link href="/admin/products/new">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
+            <Button className="text-black">
+              <Plus className="h-4 w-4 mr-2 text-black" />
               Add Product
             </Button>
           </Link>

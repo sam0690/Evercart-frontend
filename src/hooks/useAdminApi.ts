@@ -1,8 +1,16 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
-import type { User, Product, Order } from '@/types';
+import type {
+  User,
+  Product,
+  Order,
+  OrderAdminCreatePayload,
+  OrderAdminUpdatePayload,
+  AdminUserCreatePayload,
+  AdminUserUpdatePayload,
+} from '@/types';
 
 /**
  * Admin-specific hooks for fetching statistics and data
@@ -81,10 +89,24 @@ export function useAdminUsers() {
   return useQuery<User[]>({
     queryKey: ['admin', 'users'],
     queryFn: async () => {
-      // TODO: Backend needs to provide /api/users/ endpoint
-      // For now, return mock data structure
-      return [];
+      const { data } = await api.auth.getUsers();
+      return Array.isArray(data) ? data : data?.results || [];
     },
+    staleTime: 30000,
+  });
+}
+
+export function useAdminUser(userId?: number) {
+  return useQuery<User>({
+    queryKey: ['admin', 'user', userId],
+    queryFn: async () => {
+      if (typeof userId !== 'number' || Number.isNaN(userId)) {
+        throw new Error('Invalid user id');
+      }
+      const { data } = await api.auth.getUser(userId);
+      return data as User;
+    },
+    enabled: typeof userId === 'number' && !Number.isNaN(userId),
     staleTime: 30000,
   });
 }
@@ -123,6 +145,7 @@ export function useAdminOrders(status?: string) {
     queryFn: async () => {
       const { data } = await api.orders.list();
       let orders = Array.isArray(data) ? data : data?.results || [];
+      console.log('Fetched orders:', orders);
       
       // Filter by status if provided
       if (status && status !== 'all') {
@@ -137,6 +160,70 @@ export function useAdminOrders(status?: string) {
       return orders;
     },
     staleTime: 15000, // Refresh more frequently for orders
+  });
+}
+
+export function useAdminCreateOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: OrderAdminCreatePayload) => api.orders.adminCreate(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
+    },
+  });
+}
+
+export function useAdminUpdateOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: OrderAdminUpdatePayload }) =>
+      api.orders.adminUpdate(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
+    },
+  });
+}
+
+export function useAdminDeleteOrder() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.orders.adminDelete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'orders'] });
+    },
+  });
+}
+
+export function useAdminCreateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: AdminUserCreatePayload) => api.auth.createUser(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+    },
+  });
+}
+
+export function useAdminUpdateUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: AdminUserUpdatePayload }) =>
+      api.auth.updateUser(id, payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user', variables.id] });
+    },
+  });
+}
+
+export function useAdminDeleteUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => api.auth.deleteUser(id),
+    onSuccess: (_, userId) => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user', userId] });
+    },
   });
 }
 
@@ -169,6 +256,13 @@ const adminHooks = {
   useAdminProducts,
   useAdminOrders,
   useRecentOrders,
+  useAdminCreateOrder,
+  useAdminUpdateOrder,
+  useAdminDeleteOrder,
+  useAdminUser,
+  useAdminCreateUser,
+  useAdminUpdateUser,
+  useAdminDeleteUser,
 };
 
 export default adminHooks;

@@ -14,6 +14,7 @@ import { SectionTitle } from '@/components/shared/SectionTitle';
 import { Package, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import type { ProductCreatePayload } from '@/types';
 
 export default function NewProductPage() {
   const { user, loading: authLoading } = useAuth();
@@ -23,6 +24,7 @@ export default function NewProductPage() {
 
   const [form, setForm] = useState({
     title: '',
+    slug: '',
     description: '',
     price: '',
     category: '',
@@ -50,6 +52,7 @@ export default function NewProductPage() {
   const validate = () => {
     const e: Record<string, string> = {};
     if (!form.title.trim()) e.title = 'Title is required';
+    if (!form.slug.trim()) e.slug = 'Slug is required';
     if (!form.price) e.price = 'Price is required';
     if (!form.inventory) e.inventory = 'Inventory is required';
     if (!form.category) e.category = 'Category is required';
@@ -62,18 +65,29 @@ export default function NewProductPage() {
     if (!validate()) return;
     setSubmitting(true);
     try {
-      const fd = new FormData();
-      fd.append('title', form.title);
-      fd.append('description', form.description);
-      fd.append('price', form.price);
-      fd.append('inventory', form.inventory);
-      if (form.category) fd.append('category', form.category);
-      if (form.imageUrl) {
-        fd.append('images[0][image]', form.imageUrl);
-        fd.append('images[0][alt_text]', form.title);
-        fd.append('images[0][is_primary]', 'true');
+      const payload: ProductCreatePayload = {
+        title: form.title.trim(),
+        slug: form.slug.trim(),
+        description: form.description.trim() || undefined,
+        price: form.price,
+        inventory: Number(form.inventory),
+      };
+
+      if (form.category) {
+        payload.category = Number(form.category);
       }
-      await createProduct.mutateAsync(fd);
+
+      if (form.imageUrl) {
+        payload.images = [
+          {
+            image: form.imageUrl,
+            alt_text: form.title.trim() || undefined,
+            is_primary: true,
+          },
+        ];
+      }
+
+      await createProduct.mutateAsync(payload);
       toast.success('Product created');
       router.push('/admin/products');
     } catch (err) {
@@ -111,6 +125,12 @@ export default function NewProductPage() {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="slug">Slug *</Label>
+                <Input id="slug" name="slug" value={form.slug} onChange={onChange} className={errors.slug ? 'border-red-500' : ''} />
+                {errors.slug && <p className="text-sm text-red-500">{errors.slug}</p>}
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <textarea id="description" name="description" value={form.description} onChange={onChange} rows={4} className="w-full px-3 py-2 border rounded-md" />
               </div>
@@ -145,7 +165,7 @@ export default function NewProductPage() {
               </div>
 
               <div className="flex items-center gap-4 pt-4">
-                <Button type="submit" disabled={submitting} className="flex-1">
+                <Button type="submit" disabled={submitting} className="flex-1 text-black">
                   {submitting ? 'Creating...' : 'Create Product'}
                 </Button>
                 <Link href="/admin/products" className="flex-1">

@@ -13,6 +13,7 @@ import { formatPrice } from '@/lib/utils';
 import { ProductImage } from '@/components/ecommerce/ProductImage';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { ProductImage as ProductImageType } from '@/types';
 
 interface ProductDetailPageProps {
@@ -31,6 +32,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { data: product, isLoading, isError, error } = useProduct(productId || 0);
   const addToCart = useAddToCart();
   const { isAuthenticated } = useAuth();
+  const router = useRouter();
   
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -99,6 +101,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const handleAddToCart = () => {
     if (!isAuthenticated) {
       toast.error('Please login to add items to cart');
+      router.push('/login');
       return;
     }
 

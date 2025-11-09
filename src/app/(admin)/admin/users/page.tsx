@@ -1,72 +1,62 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import {
+  Users,
+  Search,
+  Shield,
+  ShoppingBag,
+  Calendar,
+  Mail,
+  Eye,
+  Trash2,
+} from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { useAdminUsers, useAdminDeleteUser } from '@/hooks/useAdminApi';
+import { SectionTitle } from '@/components/shared/SectionTitle';
+import { PageLoader } from '@/components/shared/Loader';
+import { EmptyState } from '@/components/shared/EmptyState';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { PageLoader } from '@/components/shared/Loader';
-import { EmptyState } from '@/components/shared/EmptyState';
-import { SectionTitle } from '@/components/shared/SectionTitle';
-import { 
-  Users, 
-  Search, 
-  Shield,
-  ShoppingBag,
-  Calendar,
-  Mail
-} from 'lucide-react';
 import { formatDate } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { enforceAdminAccess } from '@/services/adminAccessService';
+import {
+  RoleFilter,
+  filterUsers,
+  calculateUserStats,
+  formatUserDisplayName,
+  deleteUserAction,
+} from '@/services/adminUsersService';
+import type { User } from '@/types';
 
-// Mock user data - In production, this would come from an API
-interface UserData {
-  id: number;
-  username: string;
-  email: string;
-  first_name: string;
-  last_name: string;
-  is_customer: boolean;
-  is_admin: boolean;
-  is_staff: boolean;
-  date_joined: string;
+type UserData = User & {
   order_count?: number;
   total_spent?: number;
-}
-
-const mockUsers: UserData[] = [
-  {
-    id: 1,
-    username: 'sam_0690',
-    email: 'idksam@gmail.com',
-    first_name: 'Sam',
-    last_name: '',
-    is_customer: false,
-    is_admin: true,
-    is_staff: true,
-    date_joined: '2024-01-01T00:00:00Z',
-    order_count: 0,
-    total_spent: 0,
-  },
-];
+};
 
 export default function AdminUsersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
-  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
+  const { data: users = [], isLoading, isError } = useAdminUsers();
+  const deleteMutation = useAdminDeleteUser();
 
   useEffect(() => {
-    if (!authLoading && (!user || !user.is_admin)) {
-      router.push('/admin/login');
-    }
+    enforceAdminAccess({ user, authLoading, router });
   }, [user, authLoading, router]);
 
-  // In production, this would be replaced with actual API call
-  const users = mockUsers;
-  const isLoading = false;
+  const userList = users as UserData[];
+  const filteredUsers = useMemo(
+    () => filterUsers(userList, searchQuery, roleFilter),
+    [userList, searchQuery, roleFilter],
+  );
+  const userStats = useMemo(() => calculateUserStats(userList), [userList]);
 
   if (authLoading || isLoading) {
     return <PageLoader />;
@@ -76,30 +66,19 @@ export default function AdminUsersPage() {
     return null;
   }
 
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch = searchQuery === '' || 
-      u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (u.first_name + ' ' + u.last_name).toLowerCase().includes(searchQuery.toLowerCase());
-    
-    let matchesRole = true;
-    if (roleFilter === 'admin') {
-      matchesRole = u.is_admin;
-    } else if (roleFilter === 'customer') {
-      matchesRole = u.is_customer && !u.is_admin;
-    } else if (roleFilter === 'staff') {
-      matchesRole = u.is_staff && !u.is_admin;
-    }
-    
-    return matchesSearch && matchesRole;
-  });
-
-  const userStats = {
-    total: users.length,
-    admin: users.filter((u) => u.is_admin).length,
-    customer: users.filter((u) => u.is_customer && !u.is_admin).length,
-    staff: users.filter((u) => u.is_staff && !u.is_admin).length,
-  };
+  if (isError) {
+    return (
+      <main className="flex-1">
+        <div className="container mx-auto px-4 py-8">
+          <EmptyState
+            icon={Users}
+            title="Unable to load users"
+            description="There was a problem fetching the user list. Please try again."
+          />
+        </div>
+      </main>
+    );
+  }
 
   const getUserRoleBadge = (u: UserData) => {
     if (u.is_admin) {
@@ -118,27 +97,28 @@ export default function AdminUsersPage() {
       );
     }
     if (u.is_customer) {
-      return (
-        <Badge variant="outline">
-          Customer
-        </Badge>
-      );
+      return <Badge variant="outline">Customer</Badge>;
     }
     return <Badge variant="outline">User</Badge>;
+  };
+
+  const handleDelete = (userToDelete: User) => {
+    deleteUserAction({ user: userToDelete, mutation: deleteMutation });
   };
 
   return (
     <main className="flex-1">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <SectionTitle 
-            title="User Management" 
-            description="View and manage user accounts"
+        <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <SectionTitle
+            title="User Management"
+            description="View, create, update, and delete user accounts"
           />
+          <Link href="/admin/users/new">
+            <Button className="md:w-auto w-full text-black " variant='outline'>Create User</Button>
+          </Link>
         </div>
 
-        {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <Card className={roleFilter === 'all' ? 'border-primary' : ''}>
             <CardContent className="p-4 cursor-pointer" onClick={() => setRoleFilter('all')}>
@@ -166,10 +146,9 @@ export default function AdminUsersPage() {
           </Card>
         </div>
 
-        {/* Search Bar */}
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <div className="flex gap-4">
+            <div className="flex flex-col gap-4 md:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -189,15 +168,14 @@ export default function AdminUsersPage() {
           </CardContent>
         </Card>
 
-        {/* Users List */}
         {filteredUsers.length === 0 ? (
           <EmptyState
             icon={Users}
             title="No users found"
             description={
               searchQuery || roleFilter !== 'all'
-                ? "No users match your search or filter criteria."
-                : "No users are registered yet."
+                ? 'No users match your search or filter criteria.'
+                : 'No users are registered yet.'
             }
           />
         ) : (
@@ -211,26 +189,20 @@ export default function AdminUsersPage() {
               >
                 <Card className="hover:shadow-lg transition-shadow">
                   <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                       <div className="flex items-start gap-4 flex-1">
-                        {/* Avatar */}
                         <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                           <span className="text-lg font-semibold text-primary">
                             {userData.username.charAt(0).toUpperCase()}
                           </span>
                         </div>
-
-                        {/* User Info */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-3 mb-2">
                             <h3 className="text-lg font-semibold truncate">
-                              {userData.first_name && userData.last_name 
-                                ? `${userData.first_name} ${userData.last_name}`
-                                : userData.username}
+                              {formatUserDisplayName(userData)}
                             </h3>
                             {getUserRoleBadge(userData)}
                           </div>
-
                           <div className="space-y-1">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Users className="h-4 w-4" />
@@ -248,22 +220,44 @@ export default function AdminUsersPage() {
                         </div>
                       </div>
 
-                      {/* Stats */}
-                      {userData.is_customer && (
-                        <div className="flex gap-6 ml-4">
-                          <div className="text-center">
-                            <div className="flex items-center gap-1 text-sm text-muted-foreground mb-1">
-                              <ShoppingBag className="h-4 w-4" />
-                              <span>Orders</span>
+                      <div className="flex flex-col gap-4 lg:items-end">
+                        {userData.is_customer && (
+                          <div className="flex gap-6">
+                            <div className="text-center">
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground mb-1">
+                                <ShoppingBag className="h-4 w-4" />
+                                <span>Orders</span>
+                              </div>
+                              <p className="text-xl font-bold">{userData.order_count || 0}</p>
                             </div>
-                            <p className="text-xl font-bold">{userData.order_count || 0}</p>
+                            <div className="text-center">
+                              <p className="text-sm text-muted-foreground mb-1">Total Spent</p>
+                              <p className="text-xl font-bold">
+                                NPR {(userData.total_spent || 0).toLocaleString()}
+                              </p>
+                            </div>
                           </div>
-                          <div className="text-center">
-                            <p className="text-sm text-muted-foreground mb-1">Total Spent</p>
-                            <p className="text-xl font-bold">NPR {(userData.total_spent || 0).toLocaleString()}</p>
-                          </div>
+                        )}
+
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <Link href={`/admin/users/${userData.id}`}>
+                            <Button size="sm" variant="outline" className="flex items-center gap-2">
+                              <Eye className="h-4 w-4" />
+                              View Details
+                            </Button>
+                          </Link>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleDelete(userData)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </Button>
                         </div>
-                      )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -272,7 +266,6 @@ export default function AdminUsersPage() {
           </div>
         )}
 
-        {/* Results Summary */}
         {filteredUsers.length > 0 && (
           <Card className="mt-6">
             <CardContent className="p-6">
@@ -281,27 +274,11 @@ export default function AdminUsersPage() {
                   Showing {filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''}
                   {roleFilter !== 'all' && ` (${roleFilter})`}
                 </span>
+                {deleteMutation.isPending && <span className="text-muted-foreground">Applying changes…</span>}
               </div>
             </CardContent>
           </Card>
         )}
-
-        {/* Info Alert */}
-        <Card className="mt-6 border-blue-200">
-          <CardContent className="p-6">
-            <div className="flex items-start gap-4">
-              <Shield className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="font-semibold mb-1 text-blue-900">
-                  User Management Notice
-                </h3>
-                <p className="text-sm text-blue-800">
-                  This page displays user data for administrative purposes. User editing and role management features will be available in the full implementation.
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </main>
   );
