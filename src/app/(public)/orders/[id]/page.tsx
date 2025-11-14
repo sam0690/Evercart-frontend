@@ -1,7 +1,7 @@
 'use client';
 
-import { Suspense } from 'react';
-import { useParams } from 'next/navigation';
+import { Suspense, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,7 @@ import { EmptyState } from '@/components/shared/EmptyState';
 import { formatDate, formatPrice } from '@/lib/utils';
 import { useOrder } from '@/hooks/useApi';
 import { Package, ArrowLeft, MapPin, ShoppingBag } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 function StatusBadge({ status }: { status: string }) {
   switch (status) {
@@ -29,8 +30,22 @@ function StatusBadge({ status }: { status: string }) {
 function OrderDetailContent() {
   const params = useParams<{ id: string }>();
   const orderId = Number(params.id);
+  const { isAuthenticated, loading } = useAuth();
+  const router = useRouter();
+  const orderQuery = useOrder(orderId);
 
-  const { data: order, isLoading, isError } = useOrder(orderId);
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      const nextPath = Number.isFinite(orderId) ? `/orders/${orderId}` : '/orders';
+      router.replace(`/login?next=${encodeURIComponent(nextPath)}`);
+    }
+  }, [loading, isAuthenticated, router, orderId]);
+
+  if (!isAuthenticated) {
+    return <PageLoader />;
+  }
+
+  const { data: order, isLoading, isError } = orderQuery;
 
   if (!Number.isFinite(orderId)) {
     return (

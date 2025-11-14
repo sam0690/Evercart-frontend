@@ -74,7 +74,7 @@ export function ProductCard({ product }: ProductCardProps) {
             <div className="absolute inset-0 bg-gradient-to-t from-charcoal-900/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             
             {/* Badges with Glass */}
-            <div className="absolute top-4 left-4 flex flex-col gap-2">
+            <div className="absolute top-4 left-4 flex flex-col gap-2 text-black">
               {isOutOfStock && (
                 <Badge variant="destructive" className="shadow-md glass-card border border-white/20">
                   Out of Stock
@@ -111,21 +111,24 @@ export function ProductCard({ product }: ProductCardProps) {
               {product.description}
             </p>
 
-            <div className="flex items-center justify-between pt-3 border-t border-white/20">
-              <div>
-                <p className="text-3xl font-bold text-gradient-ocean-multi">
-                  {formatPrice(product.price)}
-                </p>
-              </div>
-              
+            <div className="pt-3 border-t border-white/20">
+              <div className="flex flex-col gap-3">
+              <p className="text-3xl font-bold text-gradient-ocean-multi">
+                {formatPrice(product.price)}
+              </p>
+
+              <div className="w-full">
                 <Button
-                size="icon"
-                onClick={handleAddToCart}
-                disabled={isOutOfStock || addToCart.isPending}
-                className="rounded-2xl shadow-lg shadow-charcoal-900/20 hover:shadow-xl hover:shadow-charcoal-900/30 transition-all duration-300 w-12 h-12 bg-gradient-teal hover:from-ocean-500 hover:to-ocean-600 hover:scale-110 text-black"
+                  type="button"
+                  onClick={handleAddToCart}
+                  disabled={isOutOfStock || addToCart.isPending}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-2xl shadow-lg shadow-charcoal-900/20 hover:shadow-xl hover:shadow-charcoal-900/30 transition-all duration-300 bg-gradient-to-br from-ocean-500 to-ocean-600 hover:from-ocean-600 hover:to-ocean-700 text-black"
                 >
-                <ShoppingCart className="h-5 w-5" />
+                  <ShoppingCart className="h-5 w-5" />
+                  Add to Cart
                 </Button>
+              </div>
+              </div>
             </div>
           </div>
         </div>

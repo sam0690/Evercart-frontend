@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { useCartStore } from '@/lib/store';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
 import type {
   Category,
   CartItem,
@@ -125,15 +127,23 @@ export function useCategory(id: number) {
 // ============================================
 
 export function useCart() {
+  const { isAuthenticated } = useAuth();
   const setItems = useCartStore((state) => state.setItems);
+  const clearCartStore = useCartStore((state) => state.clearCart);
+  const hasItems = useCartStore((state) => state.items.length > 0);
 
-  return useQuery({
+  useEffect(() => {
+    if (!isAuthenticated && hasItems) {
+      clearCartStore();
+    }
+  }, [isAuthenticated, hasItems, clearCartStore]);
+
+  const queryResult = useQuery({
     queryKey: ['cart'],
     queryFn: async () => {
       try {
         const { data } = await api.cart.list();
         const items = Array.isArray(data) ? data : data.results || [];
-        console.log('Cart items fetched:', items); // Debug log
         setItems(items);
         return items as CartItem[];
       } catch (error) {
@@ -141,8 +151,15 @@ export function useCart() {
         return [];
       }
     },
-    retry: 1,
+    retry: isAuthenticated ? 1 : false,
+    enabled: isAuthenticated,
   });
+
+  return {
+    ...queryResult,
+    data: (isAuthenticated ? queryResult.data : []) as CartItem[] | undefined,
+    isLoading: isAuthenticated ? queryResult.isLoading : false,
+  };
 }
 
 export function useAddToCart() {
@@ -239,23 +256,35 @@ export function useClearCart() {
 // ============================================
 
 export function useOrders() {
-  return useQuery({
+  const { isAuthenticated } = useAuth();
+
+  const queryResult = useQuery({
     queryKey: ['orders'],
     queryFn: async () => {
       const { data } = await api.orders.list();
       return Array.isArray(data) ? data : data.results || [];
     },
+    enabled: isAuthenticated,
+    retry: isAuthenticated ? 1 : false,
   });
+
+  return {
+    ...queryResult,
+    data: (isAuthenticated ? queryResult.data : []) as Order[] | undefined,
+  };
 }
 
 export function useOrder(id: number) {
+  const { isAuthenticated } = useAuth();
+
   return useQuery({
     queryKey: ['orders', id],
     queryFn: async () => {
       const { data } = await api.orders.get(id);
       return data as Order;
     },
-    enabled: !!id,
+    enabled: !!id && isAuthenticated,
+    retry: isAuthenticated ? 1 : false,
   });
 }
 

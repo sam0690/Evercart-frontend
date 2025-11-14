@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import type { User, LoginCredentials, RegisterData } from '@/types';
 import { toast } from 'sonner';
+import { useCartStore } from '@/lib/store';
 
 interface AuthContextType {
   user: User | null;
@@ -25,6 +26,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAuthenticated = !!user;
 
+  const clearCartState = useCallback(() => {
+    try {
+      useCartStore.getState().clearCart();
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('evercart-storage');
+      }
+    } catch (error) {
+      console.warn('Failed to clear cart state:', error);
+    }
+  }, []);
+
   /**
    * Fetch current user profile
    */
@@ -34,6 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!token) {
         setUser(null);
         setLoading(false);
+        clearCartState();
         return;
       }
 
@@ -78,15 +91,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(JSON.parse(storedUser));
         } else {
           setUser(null);
+          clearCartState();
         }
       }
     } catch (error) {
       console.error('Failed to refresh user:', error);
       setUser(null);
+      clearCartState();
     } finally {
       setLoading(false);
     } 
-  }, []);
+  }, [clearCartState]);
 
   /**
    * Login user
@@ -267,6 +282,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       document.cookie = `is_admin=${expired}`;
   try { localStorage.removeItem('admin'); } catch {}
       setUser(null);
+    clearCartState();
       toast.success('Logged out successfully');
       try {
         const current = typeof window !== 'undefined' ? window.location.pathname : '';

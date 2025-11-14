@@ -10,9 +10,26 @@ import { Package, Calendar, MapPin } from 'lucide-react';
 import { formatPrice, formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import type { Order, OrderItem } from '@/types';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function OrdersPage() {
-  const { data: orders = [], isLoading } = useOrders();
+  const { isAuthenticated, loading } = useAuth();
+  const router = useRouter();
+  const ordersQuery = useOrders();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.replace('/login?next=/orders');
+    }
+  }, [loading, isAuthenticated, router]);
+
+  if (!isAuthenticated) {
+    return <PageLoader />;
+  }
+
+  const { data: orders = [], isLoading } = ordersQuery;
 
   const getStatusColor = (status: string) => {
     switch (status) {
