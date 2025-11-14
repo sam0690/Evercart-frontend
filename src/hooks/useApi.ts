@@ -320,13 +320,36 @@ export function useSubmitOrder() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: {
-      items: Array<{ product: number; quantity: number }>;
+      items: Array<{ product?: number; productId?: number; quantity: number }>;
       shipping_address: string;
       shipping_city: string;
       shipping_postal_code: string;
       shipping_country: string;
     }) => {
-      const { data: result } = await api.orders.submit(data);
+      const mappedItems = data.items
+        .map((item) => {
+          const rawId = item.product ?? item.productId ?? (item as { product_details?: { id?: number | string } }).product_details?.id;
+          const productId = typeof rawId === 'string' ? Number(rawId) : rawId;
+          if (typeof productId !== 'number' || Number.isNaN(productId)) {
+            return null;
+          }
+          return {
+            product: productId,
+            quantity: Number(item.quantity) || 1,
+          };
+        })
+        .filter((item): item is { product: number; quantity: number } => Boolean(item));
+
+      const payload = {
+        ...data,
+        items: mappedItems,
+      };
+
+      if (payload.items.length === 0) {
+        throw new Error('No valid items to submit');
+      }
+
+      const { data: result } = await api.orders.submit(payload);
       return result as { order_id: number; total: string };
     },
     onSuccess: () => {
