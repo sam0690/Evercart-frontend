@@ -92,7 +92,7 @@ export default function OrdersPage() {
                       <div key={item.id} className="flex justify-between items-center py-2">
                         <div>
                           <Link
-                            href={`/product/${item.product}`}
+                            href={`/orders/${order.id}`}
                             className="font-medium hover:text-primary"
                           >
                             {product?.title || product?.name || `Product #${item.product}`}

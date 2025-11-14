@@ -52,12 +52,12 @@ function PaymentSuccessContent() {
           )}
 
           <div className="flex justify-center gap-4">
-            <Link href="/orders">
-              <Button className="h-12 rounded-xl">View Orders</Button>
-            </Link>
-            <Link href="/product">
-              <Button variant="outline" className="h-12 rounded-xl">Continue Shopping</Button>
-            </Link>
+            <Button className="h-12 rounded-xl" asChild>
+              <Link href="/orders">View Orders</Link>
+            </Button>
+            <Button variant="outline" className="h-12 rounded-xl" asChild>
+              <Link href="/product">Continue Shopping</Link>
+            </Button>
           </div>
         </motion.div>
       </div>

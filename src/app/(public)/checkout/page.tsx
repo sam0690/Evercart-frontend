@@ -13,7 +13,6 @@ import { PageLoader } from '@/components/shared/Loader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { formatPrice } from '@/lib/utils';
 import { ShoppingBag, CreditCard, MapPin, Wallet, Package } from 'lucide-react';
-//
 import { ProductImage } from '@/components/ecommerce/ProductImage';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -93,7 +92,11 @@ export default function CheckoutPage() {
       }
 
       // Convert cart items to order items payload
-      const items = cartItems.map((ci: any) => ({ product: ci.product, quantity: ci.quantity }));
+      const items = cartItems.map((ci: any) => ({
+        productId: ci.product ?? ci.product_id ?? ci.product_details?.id,
+        quantity: ci.quantity,
+        product_details: ci.product_details,
+      }));
       // Create order with is_paid=false
       const orderRes = await submitOrder.mutateAsync({
         items,
@@ -110,6 +113,23 @@ export default function CheckoutPage() {
         return_url: `${window.location.origin}/payment/success?order_id=${orderRes.order_id}`,
         cancel_url: `${window.location.origin}/checkout`,
       });
+
+      if (payInit?.url && payInit?.params) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = payInit.url;
+        Object.entries(payInit.params).forEach(([key, value]) => {
+          if (value === undefined || value === null) return;
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = String(value);
+          form.appendChild(input);
+        });
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
 
       if (payInit?.url) {
         // Redirect to gateway URL (eSewa/Fonepay)
@@ -378,8 +398,8 @@ export default function CheckoutPage() {
                               sizes="64px"
                             />
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold line-clamp-2 text-charcoal-900 mb-1">
-                                {product.name}
+                              <p className="text-sm font-semibold line-clamp-2 text-black mb-1">
+                                {product.title}
                               </p>
                               <p className="text-xs text-pearl-600">
                                 Qty: <span className="font-semibold text-ocean-600">{item.quantity}</span> × {formatPrice(product.price)}
