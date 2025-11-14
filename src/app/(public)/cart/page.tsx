@@ -12,12 +12,28 @@ import Link from 'next/link';
 import { formatPrice } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function CartPage() {
-  const { data: cartItems = [], isLoading } = useCart();
+  const { isAuthenticated, loading } = useAuth();
+  const router = useRouter();
+  const cartQuery = useCart();
   const updateCartItem = useUpdateCartItem();
   const removeFromCart = useRemoveFromCart();
   const clearCart = useClearCart();
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.replace('/login?next=/cart');
+    }
+  }, [loading, isAuthenticated, router]);
+
+  if (!isAuthenticated) {
+    return <PageLoader />;
+  }
+
+  const { data: cartItems = [], isLoading } = cartQuery;
 
   const subtotal = cartItems.reduce((total: number, item: any) => {
     const price = parseFloat(item.product_details?.price || '0');

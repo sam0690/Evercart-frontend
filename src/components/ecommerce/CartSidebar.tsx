@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { formatPrice } from '@/lib/utils';
 import { useAuth } from '@/context/AuthContext';
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export function CartSidebar() {
   const { isOpen, closeCart, getTotal } = useCartStore();
@@ -19,6 +20,14 @@ export function CartSidebar() {
   const { data: cartItems = [], isLoading, refetch } = useCart();
   const removeFromCart = useRemoveFromCart();
   const updateCartItem = useUpdateCartItem();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isOpen && !isAuthenticated) {
+      closeCart();
+      router.push('/login?next=/cart');
+    }
+  }, [isOpen, isAuthenticated, closeCart, router]);
 
   // Refetch cart when sidebar opens
   useEffect(() => {

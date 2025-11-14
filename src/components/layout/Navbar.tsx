@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCartStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { useEffect, useRef, useState } from 'react';
+import type { MouseEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function Navbar() {
@@ -23,10 +24,36 @@ export function Navbar() {
   const isAdmin = user?.is_admin || user?.is_staff;
 
   const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/cart', label: 'Cart' },
-    { href: '/orders', label: 'Orders' },
-  ];
+    { href: '/', label: 'Home', requiresAuth: false },
+    { href: '/cart', label: 'Cart', requiresAuth: true },
+    { href: '/orders', label: 'Orders', requiresAuth: true },
+  ] as const;
+  const redirectToLogin = (nextPath?: string) => {
+    if (nextPath) {
+      router.push(`/login?next=${encodeURIComponent(nextPath)}`);
+    } else {
+      router.push('/login');
+    }
+  };
+
+  const handleCartButton = () => {
+    if (!isAuthenticated) {
+      redirectToLogin('/cart');
+      return;
+    }
+    toggleCart();
+  };
+
+  const handleNavClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    requiresAuth?: boolean,
+    href?: string
+  ) => {
+    if (requiresAuth && !isAuthenticated) {
+      event.preventDefault();
+      redirectToLogin(href);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -76,6 +103,7 @@ export function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={(event) => handleNavClick(event, link.requiresAuth, link.href)}
                 className="relative px-5 py-2 group"
               >
                 <span className={`text-sm font-semibold transition-colors duration-300 ${
@@ -147,7 +175,7 @@ export function Navbar() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={toggleCart}
+              onClick={handleCartButton}
               className="relative text-pearl-700 hover:text-ocean-600 hover:bg-white/20 backdrop-blur-md transition-all rounded-2xl"
             >
               <ShoppingCart className="h-5 w-5" />
@@ -208,7 +236,7 @@ export function Navbar() {
                 <Link href="/register">
                   <Button 
                     size="sm" 
-                    className="rounded-xl shadow-ocean-sm hover:shadow-ocean-md transition-all bg-gradient-to-r from-ocean-600 to-ocean-500 hover:from-ocean-500 hover:to-ocean-600"
+                    className="rounded-xl shadow-ocean-sm hover:shadow-ocean-md transition-all bg-gradient-to-r from-ocean-600 to-ocean-500 hover:from-ocean-500 hover:to-ocean-600 text-black"
                   >
                     Sign Up
                   </Button>
@@ -246,7 +274,10 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={(event) => {
+                      handleNavClick(event, link.requiresAuth, link.href);
+                      setMobileMenuOpen(false);
+                    }}
                     className={`block px-4 py-3 text-sm font-semibold rounded-xl transition-all ${
                       pathname === link.href 
                         ? 'bg-ocean-100 text-ocean-700' 

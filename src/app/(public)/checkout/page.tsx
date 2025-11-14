@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart, useInitiatePayment, useSubmitOrder } from '@/hooks/useApi';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const { data: cartItems = [], isLoading } = useCart();
   // Cart will be cleared on the payment success page after backend confirms payment
   const initiatePayment = useInitiatePayment();
@@ -36,6 +36,16 @@ export default function CheckoutPage() {
   });
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway>('esewa');
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.replace('/login?next=/checkout');
+    }
+  }, [loading, isAuthenticated, router]);
+
+  if (!isAuthenticated) {
+    return <PageLoader />;
+  }
 
   const subtotal = cartItems.reduce((total: number, item: any) => {
     const price = parseFloat(item.product_details?.price || '0');
