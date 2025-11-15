@@ -27,7 +27,9 @@ export function useProducts(filters?: ProductFilters) {
   return useQuery({
     queryKey: ['products', filters],
     queryFn: async () => {
-      const { data } = await api.products.list(filters);
+      // Ensure the parameter matches the API signature (Record<string, unknown> | undefined)
+      const params = filters ? (filters as unknown as Record<string, unknown>) : undefined;
+      const { data } = await api.products.list(params);
       return data;
     },
   });
@@ -115,8 +117,9 @@ export function useCategory(id: number) {
   return useQuery({
     queryKey: ['categories', id],
     queryFn: async () => {
-      const { data } = await api.categories.get(id);
-      return data;
+      const { data } = await api.categories.list();
+      const items = Array.isArray(data) ? data : data.results || [];
+      return items.find((c: Category) => c.id === id) as Category | undefined;
     },
     enabled: !!id,
   });

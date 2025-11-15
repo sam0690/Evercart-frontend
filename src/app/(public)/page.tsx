@@ -272,7 +272,7 @@ function HomePageContent() {
                 <p className="text-lg text-pearl-600 mb-6">
                   No products found
                 </p>
-                <Button onClick={clearFilters} className="rounded-xl shadow-ocean-md hover:shadow-ocean-lg transition-all">
+                <Button onClick={clearFilters} className="rounded-xl shadow-ocean-md hover:shadow-ocean-lg transition-all text-black">
                   Clear Filters
                 </Button>
               </div>

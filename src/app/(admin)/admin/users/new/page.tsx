@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -18,6 +19,13 @@ import {
 } from '@/services/adminUsersService';
 import { hasAdminAccess } from '@/lib/utils';
 import { toast } from 'sonner';
+
+type CreateUserResponse = {
+  data?: {
+    id?: string | number;
+    [key: string]: any;
+  };
+};
 
 export default function AdminCreateUserPage() {
   const { user, loading: authLoading } = useAuth();
@@ -47,14 +55,23 @@ export default function AdminCreateUserPage() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const { payload, error } = buildAdminUserCreatePayload(form);
-    if (error || !payload) {
-      toast.error(error || 'Invalid user data');
+    const buildResult = buildAdminUserCreatePayload(form);
+
+    // Normalize payload: some implementations might return { payload?, error? } while others return the payload directly.
+    const payloadToSend =
+      buildResult && typeof (buildResult as any) === 'object' && 'payload' in (buildResult as any) && (buildResult as any).payload
+        ? (buildResult as any).payload
+        : (buildResult as any);
+
+    // Basic validation to ensure required fields exist before sending to the API
+    if (!payloadToSend || !payloadToSend.username || !payloadToSend.email) {
+      toast.error('Invalid user payload');
       return;
     }
 
-    createUserMutation.mutate(payload, {
-      onSuccess: (response) => {
+    createUserMutation.mutate(payloadToSend, {
+      onSuccess: (data: unknown) => {
+        const response = data as CreateUserResponse;
         const created = response?.data;
         toast.success('User created successfully');
         setForm(createInitialAdminUserForm());
