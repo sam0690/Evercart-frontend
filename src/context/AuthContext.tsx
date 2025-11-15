@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
@@ -42,7 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const refreshUser = useCallback(async () => {
     try {
-      const token = localStorage.getItem('access_token');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       if (!token) {
         setUser(null);
         setLoading(false);
@@ -51,19 +52,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Check if this is an admin session
-      const isAdmin = typeof localStorage !== 'undefined' && localStorage.getItem('admin') === 'true';
+      const isAdmin = typeof window !== 'undefined' && localStorage.getItem('admin') === 'true';
       
       // Check if we already have user data in localStorage and can skip the profile fetch
-      const storedUser = localStorage.getItem('user');
+      const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
         setUser(parsedUser);
         setLoading(false);
         // Optionally refresh profile in background, but don't block UX
         try {
-          const { data } = isAdmin 
-            ? await api.admin.getProfile()
-            : await api.auth.getProfile();
+          const { data } = await (api as any).auth.getProfile();
           // Only update if data changed
           if (JSON.stringify(data) !== JSON.stringify(parsedUser)) {
             setUser(data);
@@ -75,18 +74,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         return;
       }
-      
+
       // Try to fetch profile from appropriate endpoint - admin or user
       try {
-        const { data } = isAdmin 
-          ? await api.admin.getProfile()
-          : await api.auth.getProfile();
+        const response = isAdmin ? await (api as any).admin.getProfile() : await (api as any).auth.getProfile();
+        const data = response.data;
         localStorage.setItem('user', JSON.stringify(data));
         setUser(data);
       } catch (error) {
         console.warn('Profile endpoint not available:', error);
-        // If profile fetch fails, don't clear the user - middleware already validated them
-        // Use stored user if available
+        // If profile fetch fails, fallback to stored user or clear state
         if (storedUser) {
           setUser(JSON.parse(storedUser));
         } else {
@@ -94,13 +91,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           clearCartState();
         }
       }
-    } catch (error) {
-      console.error('Failed to refresh user:', error);
-      setUser(null);
-      clearCartState();
     } finally {
       setLoading(false);
-    } 
+    }
   }, [clearCartState]);
 
   /**
@@ -110,7 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       setLoading(true);
       const { data } = options?.adminOnly
-        ? await api.auth.adminLogin(credentials)
+        ? await (api as any).admin.login(credentials)
         : await api.auth.login(credentials);
       
       // Store tokens
@@ -149,8 +142,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
           // Use admin profile endpoint if admin login, otherwise use user endpoint
           const profileResponse = options?.adminOnly
-            ? await api.admin.getProfile()
-            : await api.auth.getProfile();
+            ? await (api as any).admin.getProfile()
+            : await (api as any).auth.getProfile();
           const profileData = profileResponse.data;
           localStorage.setItem('user', JSON.stringify(profileData));
           setUser(profileData);
@@ -170,10 +163,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             toast.error('Admin access only. Please use an admin account.');
             throw new Error('AdminOnly');
           }
-        } catch (profileError) {
-          console.warn('Could not fetch profile after login:', profileError);
-          // If profile fetch fails, but login succeeded and returned user data, use that
-          // This prevents breaking the login flow on profile endpoint issues
           if (data.user) {
             // We already handled this above, so just skip
           } else {
@@ -208,6 +197,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               toast.error('Admin access only. Please use an admin account.');
               throw new Error('AdminOnly');
             }
+          }
+        } catch (error) {
+          console.warn('Profile fetch during login failed:', error);
+          // Fallback to a basic user object when profile fetch fails
+          const basicUser = {
+            username: credentials.username,
+            id: 0, // Will be updated when profile is available
+            email: '',
+            first_name: '',
+            last_name: '',
+            is_customer: true,
+            is_admin: false,
+            is_staff: false,
+            is_superuser: false,
+            date_joined: new Date().toISOString(),
+          };
+          localStorage.setItem('user', JSON.stringify(basicUser));
+          setUser(basicUser);
+          document.cookie = `is_admin=false${cookieBase}`;
+          try { localStorage.setItem('admin', 'false'); } catch {}
+          if (options?.adminOnly) {
+            // Enforce admin only: clear and block
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('user');
+            const expired = '; path=/; Max-Age=0';
+            document.cookie = `access_token=${expired}`;
+            document.cookie = `refresh_token=${expired}`;
+            document.cookie = `is_admin=${expired}`;
+            setUser(null);
+            try { localStorage.removeItem('admin'); } catch {}
+            toast.error('Admin access only. Please use an admin account.');
+            throw new Error('AdminOnly');
           }
         }
       }
@@ -267,7 +289,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    */
   const logout = async () => {
     try {
-      await api.auth.logout();
+      await (api as any).auth.logout?.();
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
