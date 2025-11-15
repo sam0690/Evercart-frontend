@@ -21,6 +21,7 @@ import {
   ManualOrderItemForm,
 } from '@/services/adminOrdersService';
 import { enforceAdminAccess } from '@/services/adminAccessService';
+import { hasAdminAccess } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function AdminCreateOrderPage() {
@@ -29,6 +30,7 @@ export default function AdminCreateOrderPage() {
   const createOrderMutation = useAdminCreateOrder();
 
   const [form, setForm] = useState<ManualOrderFormState>(createInitialManualOrderForm());
+  const hasAccess = hasAdminAccess(user);
 
   useEffect(() => {
     enforceAdminAccess({ user, authLoading, router });
@@ -38,7 +40,7 @@ export default function AdminCreateOrderPage() {
     return <PageLoader />;
   }
 
-  if (!user || !user.is_admin) {
+  if (!hasAccess) {
     return null;
   }
 

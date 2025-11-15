@@ -35,12 +35,14 @@ import {
 } from '@/services/adminUsersService';
 import { formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
+import { hasAdminAccess } from '@/lib/utils';
 
 export default function AdminUserDetailPage() {
   const params = useParams<{ userId: string }>();
   const userId = Number(params?.userId);
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const hasAccess = hasAdminAccess(user);
 
   const {
     data: userData,
@@ -70,7 +72,7 @@ export default function AdminUserDetailPage() {
     return <PageLoader />;
   }
 
-  if (!user || !user.is_admin) {
+  if (!hasAccess) {
     return null;
   }
 

@@ -123,17 +123,19 @@ export default function AdminDashboard() {
   const { data: stats, isLoading: statsLoading } = useAdminStats();
   const { data: recentOrders = [], isLoading: ordersLoading } = useRecentOrders(5);
 
+  const hasAdminAccess = user && (user.is_admin || user.is_staff || user.is_superuser);
+
   useEffect(() => {
-    if (!loading && (!user || !user.is_admin)) {
+    if (!loading && !hasAdminAccess) {
       router.push('/admin/login');
     }
-  }, [user, loading, router]);
+  }, [hasAdminAccess, loading, router]);
 
   if (loading) {
     return <PageLoader />;
   }
 
-  if (!user || !user.is_admin) {
+  if (!hasAdminAccess) {
     return null;
   }
 

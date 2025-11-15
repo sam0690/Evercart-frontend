@@ -14,6 +14,7 @@ import { SectionTitle } from '@/components/shared/SectionTitle';
 import { Package, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { hasAdminAccess } from '@/lib/utils';
 import type { ProductCreatePayload } from '@/types';
 
 export default function NewProductPage() {
@@ -21,6 +22,7 @@ export default function NewProductPage() {
   const router = useRouter();
   const { data: categories = [] } = useCategories();
   const createProduct = useCreateProduct();
+  const hasAccess = hasAdminAccess(user);
 
   const [form, setForm] = useState({
     title: '',
@@ -35,13 +37,13 @@ export default function NewProductPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && (!user || !user.is_admin)) {
+    if (!authLoading && !hasAccess) {
       router.push('/admin/login');
     }
-  }, [user, authLoading, router]);
+  }, [hasAccess, authLoading, router]);
 
   if (authLoading) return <PageLoader />;
-  if (!user || !user.is_admin) return null;
+  if (!hasAccess) return null;
 
   const onChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

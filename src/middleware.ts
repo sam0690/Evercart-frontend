@@ -6,6 +6,11 @@ export function middleware(req: NextRequest) {
 
   // Protect /admin routes
   if (pathname.startsWith('/admin')) {
+    // Allow the admin login page itself to avoid redirect loop
+    if (pathname === '/admin/login') {
+      return NextResponse.next();
+    }
+
     const accessToken = req.cookies.get('access_token')?.value;
     const isAdmin = req.cookies.get('is_admin')?.value;
 

@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { User } from '@/types';
 
 /**
  * Utility function to merge Tailwind CSS classes
@@ -47,6 +48,13 @@ export function formatDate(date: string | Date): string {
 export function truncate(text: string, length: number): string {
   if (text.length <= length) return text;
   return text.slice(0, length) + '...';
+}
+
+/**
+ * Check if a user has access to the admin area
+ */
+export function hasAdminAccess(user?: User | null): user is User {
+  return Boolean(user && (user.is_admin || user.is_staff || user.is_superuser));
 }
 
 /**

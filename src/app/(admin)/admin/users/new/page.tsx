@@ -16,6 +16,7 @@ import {
   buildAdminUserCreatePayload,
   AdminUserFormState,
 } from '@/services/adminUsersService';
+import { hasAdminAccess } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export default function AdminCreateUserPage() {
@@ -23,6 +24,7 @@ export default function AdminCreateUserPage() {
   const router = useRouter();
   const createUserMutation = useAdminCreateUser();
   const [form, setForm] = useState<AdminUserFormState>(createInitialAdminUserForm());
+  const hasAccess = hasAdminAccess(user);
 
   useEffect(() => {
     enforceAdminAccess({ user, authLoading, router });
@@ -32,7 +34,7 @@ export default function AdminCreateUserPage() {
     return <PageLoader />;
   }
 
-  if (!user || !user.is_admin) {
+  if (!hasAccess) {
     return null;
   }
 

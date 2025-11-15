@@ -33,6 +33,7 @@ import {
   deleteUserAction,
 } from '@/services/adminUsersService';
 import type { User } from '@/types';
+import { hasAdminAccess } from '@/lib/utils';
 
 type UserData = User & {
   order_count?: number;
@@ -42,6 +43,7 @@ type UserData = User & {
 export default function AdminUsersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const hasAccess = hasAdminAccess(user);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const { data: users = [], isLoading, isError } = useAdminUsers();
@@ -62,7 +64,7 @@ export default function AdminUsersPage() {
     return <PageLoader />;
   }
 
-  if (!user || !user.is_admin) {
+  if (!hasAccess) {
     return null;
   }
 

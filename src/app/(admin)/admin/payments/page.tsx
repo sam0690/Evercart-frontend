@@ -9,20 +9,22 @@ import type { Payment } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CreditCard, RefreshCcw } from 'lucide-react';
+import { hasAdminAccess } from '@/lib/utils';
 
 export default function PaymentsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { data: payments = [], isLoading, refetch, isFetching } = usePayments();
+  const hasAccess = hasAdminAccess(user);
 
   useEffect(() => {
-    if (!loading && (!user || !user.is_admin)) {
+    if (!loading && !hasAccess) {
       router.push('/admin/login');
     }
-  }, [user, loading, router]);
+  }, [hasAccess, loading, router]);
 
   if (loading) return null;
-  if (!user || !user.is_admin) return null;
+  if (!hasAccess) return null;
 
   const statusStyle = (status: string) => {
     switch (status) {

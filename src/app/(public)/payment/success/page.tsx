@@ -25,7 +25,7 @@ function PaymentSuccessContent() {
   }, [orderId, refetch]);
 
   useEffect(() => {
-    const isPaid = order?.status === 'paid' || order?.is_paid;
+    const isPaid = order?.status === 'paid' || order?.is_paid || order?.status === 'pending';
     if (!isPaid || hasClearedRef.current || clearCart.isPending) {
       return;
     }

@@ -37,10 +37,12 @@ import {
   PaidOverrideMap,
 } from '@/services/adminOrdersService';
 import { enforceAdminAccess } from '@/services/adminAccessService';
+import { hasAdminAccess } from '@/lib/utils';
 
 export default function AdminOrdersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const hasAccess = hasAdminAccess(user);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [statusOverrides, setStatusOverrides] = useState<StatusOverrideMap>({});
@@ -63,7 +65,7 @@ export default function AdminOrdersPage() {
     return <PageLoader />;
   }
 
-  if (!user || !user.is_admin) {
+  if (!hasAccess) {
     return null;
   }
 

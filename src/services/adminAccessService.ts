@@ -1,4 +1,5 @@
 import type { User } from '@/types';
+import { hasAdminAccess } from '@/lib/utils';
 
 interface EnforceAdminAccessOptions {
   user: User | null;
@@ -13,7 +14,7 @@ export function enforceAdminAccess({
   router,
   redirectTo = '/admin/login',
 }: EnforceAdminAccessOptions) {
-  if (!authLoading && (!user || !user.is_admin)) {
+  if (!authLoading && !hasAdminAccess(user)) {
     router.push(redirectTo);
   }
 }

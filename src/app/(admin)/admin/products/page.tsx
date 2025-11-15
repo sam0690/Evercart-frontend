@@ -21,7 +21,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import Link from 'next/link';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, hasAdminAccess } from '@/lib/utils';
 import { ProductImage } from '@/components/ecommerce/ProductImage';
 import { motion } from 'framer-motion';
 import type { Product } from '@/types';
@@ -29,13 +29,14 @@ import type { Product } from '@/types';
 export default function AdminProductsPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const hasAccess = hasAdminAccess(user);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    if (!authLoading && (!user || !user.is_admin)) {
+    if (!authLoading && !hasAccess) {
       router.push('/admin/login');
     }
-  }, [user, authLoading, router]);
+  }, [hasAccess, authLoading, router]);
 
   const { data: products = [], isLoading } = useProducts({
     search: searchQuery,
@@ -47,7 +48,7 @@ export default function AdminProductsPage() {
     return <PageLoader />;
   }
 
-  if (!user || !user.is_admin) {
+  if (!hasAccess) {
     return null;
   }
 

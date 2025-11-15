@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
+import { hasAdminAccess } from '@/lib/utils';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
@@ -28,6 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const { user, logout, loading } = useAuth();
+  const hasAdminAccessFlag = hasAdminAccess(user);
   const router = useRouter();
 
   // Client-side guard for admin routes
@@ -40,15 +42,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     
     // Only redirect if:
     // 1. Loading is complete AND
-    // 2. No user AND
+    // 2. User lacks admin access AND
     // 3. No stored user in localStorage (indicating a real logout/invalid session)
-    if (!loading && !user) {
+    if (!loading && !hasAdminAccessFlag) {
       const storedUser = typeof localStorage !== 'undefined' ? localStorage.getItem('user') : null;
       if (!storedUser) {
         router.push('/admin/login');
       }
     }
-  }, [user, loading, router, pathname]);
+  }, [hasAdminAccessFlag, loading, router, pathname]);
 
   // Do not render the admin layout chrome on the login page
   if (pathname === '/admin/login') {

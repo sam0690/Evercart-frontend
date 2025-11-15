@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { toast } from "sonner";
 import { ArrowLeft, Package } from "lucide-react";
+import { hasAdminAccess } from '@/lib/utils';
 import type { ProductUpdatePayload } from "@/types";
 
 export default function EditProductPage() {
@@ -19,6 +20,7 @@ export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const id = Number(params?.id);
+  const hasAccess = hasAdminAccess(user);
 
   const { data: categories = [] } = useCategories();
   const { data: product, isLoading } = useProduct(id);
@@ -31,10 +33,10 @@ export default function EditProductPage() {
   const [category, setCategory] = useState("");
 
   useEffect(() => {
-    if (!authLoading && (!user || !user.is_admin)) {
+    if (!authLoading && !hasAccess) {
       router.push("/admin/login");
     }
-  }, [user, authLoading, router]);
+  }, [hasAccess, authLoading, router]);
 
   useEffect(() => {
     if (product) {
@@ -59,7 +61,7 @@ export default function EditProductPage() {
       <main className="flex-1"><div className="container mx-auto px-4 py-8">Loading...</div></main>
     );
   }
-  if (!user || !user.is_admin) return null;
+  if (!hasAccess) return null;
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

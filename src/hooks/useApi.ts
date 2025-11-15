@@ -380,7 +380,7 @@ export function useSubmitOrder() {
       }
 
       const { data: result } = await api.orders.submit(payload);
-      return result as { order_id: number; total: string };
+      return result as { order_id: number; total: string,transaction_id: string};
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
