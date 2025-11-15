@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useOrder, useClearCart } from '@/hooks/useApi';
 import { PageLoader } from '@/components/shared/Loader';
@@ -13,6 +13,7 @@ function PaymentSuccessContent() {
   const orderId = Number(params.get('order_id'));
   const { data: order, isLoading, refetch } = useOrder(orderId);
   const clearCart = useClearCart();
+  const hasClearedRef = useRef(false);
 
   useEffect(() => {
     if (!orderId) return;
@@ -24,10 +25,13 @@ function PaymentSuccessContent() {
   }, [orderId, refetch]);
 
   useEffect(() => {
-    if (order?.status === 'paid' || order?.is_paid) {
-      // Clear client cart when payment confirmed
-      clearCart.mutate();
+    const isPaid = order?.status === 'paid' || order?.is_paid;
+    if (!isPaid || hasClearedRef.current || clearCart.isPending) {
+      return;
     }
+
+    hasClearedRef.current = true;
+    clearCart.mutate();
   }, [order, clearCart]);
 
   if (!orderId || isLoading) return <PageLoader />;
@@ -52,11 +56,11 @@ function PaymentSuccessContent() {
           )}
 
           <div className="flex justify-center gap-4">
-            <Button className="h-12 rounded-xl" asChild>
+            <Button className="h-12 rounded-xl text-black" asChild>
               <Link href="/orders">View Orders</Link>
             </Button>
             <Button variant="outline" className="h-12 rounded-xl" asChild>
-              <Link href="/product">Continue Shopping</Link>
+              <Link href="/">Continue Shopping</Link>
             </Button>
           </div>
         </motion.div>

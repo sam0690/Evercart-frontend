@@ -33,6 +33,7 @@ export default function CheckoutPage() {
     shipping_city: '',
     shipping_postal_code: '',
     shipping_country: 'Nepal',
+    shipping_phone: '',
   });
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway>('esewa');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -67,6 +68,14 @@ export default function CheckoutPage() {
     if (!formData.shipping_address) newErrors.shipping_address = 'Address is required';
     if (!formData.shipping_city) newErrors.shipping_city = 'City is required';
     if (!formData.shipping_postal_code) newErrors.shipping_postal_code = 'Postal code is required';
+    if (!formData.shipping_phone) {
+      newErrors.shipping_phone = 'Phone number is required';
+    } else {
+      const digitsOnly = formData.shipping_phone.replace(/[^0-9+]/g, '');
+      if (digitsOnly.length < 7) {
+        newErrors.shipping_phone = 'Enter a valid phone number';
+      }
+    }
 
     return newErrors;
   };
@@ -114,6 +123,7 @@ export default function CheckoutPage() {
         shipping_city: formData.shipping_city,
         shipping_postal_code: formData.shipping_postal_code,
         shipping_country: formData.shipping_country,
+        shipping_phone: formData.shipping_phone,
       });
 
       // Initiate payment session
@@ -241,6 +251,30 @@ export default function CheckoutPage() {
                           className="text-sm text-destructive font-medium"
                         >
                           {errors.shipping_address}
+                        </motion.p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="shipping_phone" className="text-base font-semibold text-charcoal-800">
+                        Phone Number*
+                      </Label>
+                      <Input
+                        id="shipping_phone"
+                        name="shipping_phone"
+                        type="tel"
+                        placeholder="+977-9800000000"
+                        value={formData.shipping_phone}
+                        onChange={handleChange}
+                        className={`h-12 ${errors.shipping_phone ? 'border-destructive ring-destructive' : ''}`}
+                      />
+                      {errors.shipping_phone && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-sm text-destructive font-medium"
+                        >
+                          {errors.shipping_phone}
                         </motion.p>
                       )}
                     </div>
