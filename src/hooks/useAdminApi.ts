@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -89,7 +90,7 @@ export function useAdminUsers() {
   return useQuery<User[]>({
     queryKey: ['admin', 'users'],
     queryFn: async () => {
-      const { data } = await api.auth.getUsers();
+      const { data } = await (api as any).users.list();
       return Array.isArray(data) ? data : data?.results || [];
     },
     staleTime: 30000,
@@ -103,7 +104,7 @@ export function useAdminUser(userId?: number) {
       if (typeof userId !== 'number' || Number.isNaN(userId)) {
         throw new Error('Invalid user id');
       }
-      const { data } = await api.auth.getUser(userId);
+      const { data } = await (api as any).users.get(userId);
       return data as User;
     },
     enabled: typeof userId === 'number' && !Number.isNaN(userId),
@@ -197,7 +198,7 @@ export function useAdminDeleteOrder() {
 export function useAdminCreateUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (payload: AdminUserCreatePayload) => api.auth.createUser(payload),
+    mutationFn: (payload: AdminUserCreatePayload) => (api as any).users.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
     },
@@ -208,7 +209,7 @@ export function useAdminUpdateUser() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, payload }: { id: number; payload: AdminUserUpdatePayload }) =>
-      api.auth.updateUser(id, payload),
+      (api as any).users.update(id, payload),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'user', variables.id] });
@@ -219,7 +220,7 @@ export function useAdminUpdateUser() {
 export function useAdminDeleteUser() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api.auth.deleteUser(id),
+    mutationFn: (id: number) => (api as any).users.delete(id),
     onSuccess: (_, userId) => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
       queryClient.invalidateQueries({ queryKey: ['admin', 'user', userId] });
