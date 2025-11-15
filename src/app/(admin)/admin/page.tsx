@@ -227,7 +227,7 @@ export default function AdminDashboard() {
           />
           <StatCard
             title="Total Revenue"
-            value={`$${stats?.totalRevenue?.toFixed(2) || '0.00'}`}
+            value={`NPR.${stats?.totalRevenue?.toFixed(2) || '0.00'}`}
             change={stats?.revenueChange || '+0%'}
             icon={DollarSign}
             color="teal"
