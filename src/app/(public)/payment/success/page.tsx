@@ -3,16 +3,17 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useOrder, useClearCart } from '@/hooks/useApi';
+import { useOrder } from '@/hooks/useApi';
 import { PageLoader } from '@/components/shared/Loader';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
+import { useCartStore } from '@/lib/store';
 
 function PaymentSuccessContent() {
   const params = useSearchParams();
   const orderId = Number(params.get('order_id'));
   const { data: order, isLoading, refetch } = useOrder(orderId);
-  const clearCart = useClearCart();
+  const clearCart = useCartStore((state) => state.clearCart);
   const hasClearedRef = useRef(false);
 
   useEffect(() => {
@@ -26,12 +27,12 @@ function PaymentSuccessContent() {
 
   useEffect(() => {
     const isPaid = order?.status === 'paid' || order?.is_paid || order?.status === 'pending';
-    if (!isPaid || hasClearedRef.current || clearCart.isPending) {
+    if (!isPaid || hasClearedRef.current) {
       return;
     }
 
     hasClearedRef.current = true;
-    clearCart.mutate();
+    clearCart();
   }, [order, clearCart]);
 
   if (!orderId || isLoading) return <PageLoader />;
