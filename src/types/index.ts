@@ -141,6 +141,7 @@ export interface Order {
   status: 'pending' | 'paid' | 'shipped';
   is_paid?: boolean;
   transaction_id?: string;
+  transaction_uuid?: string;
   created_at: string;
   shipping_address?: string;
   shipping_city?: string;
@@ -168,6 +169,7 @@ export interface OrderAdminCreatePayload {
   status?: Order['status'];
   is_paid?: boolean;
   transaction_id?: string;
+  transaction_uuid?: string;
   shipping_address?: string;
   shipping_city?: string;
   shipping_postal_code?: string;

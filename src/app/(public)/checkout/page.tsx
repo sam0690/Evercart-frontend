@@ -19,6 +19,10 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import type { PaymentGateway } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
+import esewaLogo from '../../../../assets/esewa.png';
+import khaltiLogo from '../../../../assets/khalti.png';
+import fonepayLogo from '../../../../assets/fonepay.png';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -55,12 +59,39 @@ export default function CheckoutPage() {
 
   const shipping = subtotal > 5000 ? 0 : 150;
   const total = subtotal + shipping;
-
   const paymentGateways = [
-    { id: 'esewa' as PaymentGateway, name: 'eSewa', logo: '🟢' },
-    { id: 'khalti' as PaymentGateway, name: 'Khalti', logo: '🟣' },
-    { id: 'fonepay' as PaymentGateway, name: 'Fonepay', logo: '🔵' },
+    {
+      id: 'esewa' as PaymentGateway,
+      name: 'eSewa',
+      logo: (
+        <Image
+          src={esewaLogo}
+          alt="eSewa"
+          height={40}
+          width={40}
+          className="h-10 w-10 mb-3 object-contain"
+        />
+      ),
+    },
+    { id: 'khalti' as PaymentGateway, name: 'Khalti', logo: (
+      <Image
+        src={khaltiLogo}
+        alt="Khalti"
+        height={40}
+        width={40}
+        className="h-10 w-10 mb-3 object-contain"
+      />
+    ) },
+    { id: 'fonepay' as PaymentGateway, name: 'Fonepay', logo: (
+      <Image 
+        src={fonepayLogo}
+        alt = "fonepay"
+        height = {40}
+        width = {40}
+        className ="h-10 w-10 mb-3 object-contain" />
+    ) },
   ];
+
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
