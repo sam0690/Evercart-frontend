@@ -141,11 +141,13 @@ export interface Order {
   status: 'pending' | 'paid' | 'shipped';
   is_paid?: boolean;
   transaction_id?: string;
+  transaction_uuid?: string;
   created_at: string;
   shipping_address?: string;
   shipping_city?: string;
   shipping_postal_code?: string;
   shipping_country?: string;
+  shipping_phone?: string;
   payment_details?: Payment;
 }
 
@@ -154,6 +156,7 @@ export interface OrderCreate {
   shipping_city: string;
   shipping_postal_code: string;
   shipping_country: string;
+  shipping_phone: string;
 }
 
 export interface OrderItemInput {
@@ -166,10 +169,12 @@ export interface OrderAdminCreatePayload {
   status?: Order['status'];
   is_paid?: boolean;
   transaction_id?: string;
+  transaction_uuid?: string;
   shipping_address?: string;
   shipping_city?: string;
   shipping_postal_code?: string;
   shipping_country?: string;
+  shipping_phone?: string;
   items_data: OrderItemInput[];
 }
 

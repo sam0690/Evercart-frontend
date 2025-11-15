@@ -231,6 +231,7 @@ export const api = {
       shipping_city: string;
       shipping_postal_code: string;
       shipping_country: string;
+      shipping_phone: string;
     }) => apiClient.post('api/orders/submit/', data),
     
     cancel: (id: number) => apiClient.post(`api/orders/orders/${id}/cancel/`),

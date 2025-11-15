@@ -19,6 +19,10 @@ import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import type { PaymentGateway } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
+import esewaLogo from '../../../../assets/esewa.png';
+import khaltiLogo from '../../../../assets/khalti.png';
+import fonepayLogo from '../../../../assets/fonepay.png';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -33,6 +37,7 @@ export default function CheckoutPage() {
     shipping_city: '',
     shipping_postal_code: '',
     shipping_country: 'Nepal',
+    shipping_phone: '',
   });
   const [selectedGateway, setSelectedGateway] = useState<PaymentGateway>('esewa');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -54,12 +59,39 @@ export default function CheckoutPage() {
 
   const shipping = subtotal > 5000 ? 0 : 150;
   const total = subtotal + shipping;
-
   const paymentGateways = [
-    { id: 'esewa' as PaymentGateway, name: 'eSewa', logo: '🟢' },
-    { id: 'khalti' as PaymentGateway, name: 'Khalti', logo: '🟣' },
-    { id: 'fonepay' as PaymentGateway, name: 'Fonepay', logo: '🔵' },
+    {
+      id: 'esewa' as PaymentGateway,
+      name: 'eSewa',
+      logo: (
+        <Image
+          src={esewaLogo}
+          alt="eSewa"
+          height={40}
+          width={40}
+          className="h-10 w-10 mb-3 object-contain"
+        />
+      ),
+    },
+    { id: 'khalti' as PaymentGateway, name: 'Khalti', logo: (
+      <Image
+        src={khaltiLogo}
+        alt="Khalti"
+        height={40}
+        width={40}
+        className="h-10 w-10 mb-3 object-contain"
+      />
+    ) },
+    { id: 'fonepay' as PaymentGateway, name: 'Fonepay', logo: (
+      <Image 
+        src={fonepayLogo}
+        alt = "fonepay"
+        height = {40}
+        width = {40}
+        className ="h-10 w-10 mb-3 object-contain" />
+    ) },
   ];
+
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -67,6 +99,14 @@ export default function CheckoutPage() {
     if (!formData.shipping_address) newErrors.shipping_address = 'Address is required';
     if (!formData.shipping_city) newErrors.shipping_city = 'City is required';
     if (!formData.shipping_postal_code) newErrors.shipping_postal_code = 'Postal code is required';
+    if (!formData.shipping_phone) {
+      newErrors.shipping_phone = 'Phone number is required';
+    } else {
+      const digitsOnly = formData.shipping_phone.replace(/[^0-9+]/g, '');
+      if (digitsOnly.length < 7) {
+        newErrors.shipping_phone = 'Enter a valid phone number';
+      }
+    }
 
     return newErrors;
   };
@@ -114,6 +154,7 @@ export default function CheckoutPage() {
         shipping_city: formData.shipping_city,
         shipping_postal_code: formData.shipping_postal_code,
         shipping_country: formData.shipping_country,
+        shipping_phone: formData.shipping_phone,
       });
 
       // Initiate payment session
@@ -241,6 +282,30 @@ export default function CheckoutPage() {
                           className="text-sm text-destructive font-medium"
                         >
                           {errors.shipping_address}
+                        </motion.p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="shipping_phone" className="text-base font-semibold text-charcoal-800">
+                        Phone Number*
+                      </Label>
+                      <Input
+                        id="shipping_phone"
+                        name="shipping_phone"
+                        type="tel"
+                        placeholder="+977-9800000000"
+                        value={formData.shipping_phone}
+                        onChange={handleChange}
+                        className={`h-12 ${errors.shipping_phone ? 'border-destructive ring-destructive' : ''}`}
+                      />
+                      {errors.shipping_phone && (
+                        <motion.p
+                          initial={{ opacity: 0, y: -5 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="text-sm text-destructive font-medium"
+                        >
+                          {errors.shipping_phone}
                         </motion.p>
                       )}
                     </div>

@@ -354,6 +354,7 @@ export function useSubmitOrder() {
       shipping_city: string;
       shipping_postal_code: string;
       shipping_country: string;
+      shipping_phone: string;
     }) => {
       const mappedItems = data.items
         .map((item) => {
